@@ -1,0 +1,64 @@
+// Rules based on "Google JavaScript Style Guide" [https://google.github.io/styleguide/jsguide.html#introduction]
+{
+    "env": {
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        // 4.1.2 Nonempty blocks: K&R style
+        "eslint:recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 12,
+        "sourceType": "module"
+    },
+    "plugins": [
+    ],
+    "rules": {
+        // "4.1.1 Braces are used for all control structures"
+        "curly": [
+            "error",
+            "all"
+        ],
+        // 4.2 Block indentation: +2 spaces
+        // 4.2.3 Class literals
+        // 4.2.4 Function expressions
+        // 4.2.5 Switch statements
+        "indent": [
+            "error",
+            2
+        ],
+        // 4.2.1 Array literals: optionally "block-like"
+        "array-bracket-spacing": [
+            "error",
+            "never"
+        ],
+        // 4.2.2 Object literals: optionally "block-like"
+        "object-curly-spacing": [
+            "error",
+            "never"
+        ],
+        // 4.3.1 One statement per line
+        "max-statements-per-line": [
+            "error"
+        ],
+        // 4.3.2 Semicolons are required
+        "semi": [
+            "error",
+            "always"
+        ],
+        // 4.4 Column limit: 80
+        // 4.5 Line-wrapping
+        "max-len": [
+            "error"
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "single"
+        ]
+    }
+}
