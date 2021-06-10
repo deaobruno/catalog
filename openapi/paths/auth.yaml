@@ -1,0 +1,200 @@
+/auth/login:
+  post:
+    tags: [Authentication]
+    description: Generates authentication tokens
+    operationId: auth
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Login"
+    responses:
+      "200":
+        description: Tokens generated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accessToken:
+                  description: Access Token
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzEsImV4cCI6MTYyMjkyNTU3MX0.0I5gFrVjyUjdgg_NkMwdwk6ZHux4n8JLqgia1CERrbM
+                refreshToken:
+                  description: Refresh Token
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzF9._-5EiwijyMU1y49adL1hRTOgQx-xipBdnun2Fym3VWw
+              required:
+                - accessToken
+                - refreshToken
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/401Response"
+      "404":
+        description: Not Found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/404Response"
+      "500":
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/500Response"
+      default:
+        description: Some other error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+
+/auth/register:
+  post:
+    tags: [Authentication]
+    description: Regists user information
+    operationId: register
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Login"
+    responses:
+      "200":
+        description: User successfully registered
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  description: User ID
+                  type: string
+                  example: 1622928299857
+                email:
+                  description: User email
+                  type: string
+                  example: user@email.com
+              required:
+                - id
+                - email
+      "500":
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/500Response"
+      default:
+        description: Some other error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+
+/auth/refresh:
+  post:
+    tags: [Authentication]
+    description: Generates new Access Token
+    operationId: refresh
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              refreshToken:
+                description: Refresh Token
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzF9._-5EiwijyMU1y49adL1hRTOgQx-xipBdnun2Fym3VWw
+            required:
+              - refreshToken
+    responses:
+      "200":
+        description: New Access Token Generated
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accessToken:
+                  description: Access Token
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzEsImV4cCI6MTYyMjkyNTU3MX0.0I5gFrVjyUjdgg_NkMwdwk6ZHux4n8JLqgia1CERrbM
+              required:
+                - accessToken
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/401Response"
+      "403":
+        description: Forbidden
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/403Response"
+      "500":
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/500Response"
+      default:
+        description: Some other error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"
+
+/auth/logout:
+  post:
+    tags: [Authentication]
+    description: Revoke user access
+    operationId: logout
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                description: User ID
+                type: string
+                example: 1622928299857
+            required:
+              - id
+    responses:
+      "204":
+        description: No Content
+      "401":
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/401Response"
+      "404":
+        description: Not Found
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/404Response"
+      "500":
+        description: Internal Server Error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/500Response"
+      default:
+        description: Some other error
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErrorResponse"

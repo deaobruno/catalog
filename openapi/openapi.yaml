@@ -1,0 +1,1107 @@
+openapi: 3.0.0
+
+info:
+  title: Catalog API
+  description: Node.js catalog RESTful API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local server
+
+tags:
+  - name: Authentication
+  - name: Users
+  - name: Products
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      description: Generates authentication tokens
+      operationId: auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Login"
+      responses:
+        "200":
+          description: Tokens generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    description: Access Token
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzEsImV4cCI6MTYyMjkyNTU3MX0.0I5gFrVjyUjdgg_NkMwdwk6ZHux4n8JLqgia1CERrbM
+                  refreshToken:
+                    description: Refresh Token
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzF9._-5EiwijyMU1y49adL1hRTOgQx-xipBdnun2Fym3VWw
+                required:
+                  - accessToken
+                  - refreshToken
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      description: Regists user information
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Login"
+      responses:
+        "200":
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: User ID
+                    type: string
+                    example: 1622928299857
+                  email:
+                    description: User email
+                    type: string
+                    example: user@email.com
+                required:
+                  - id
+                  - email
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      description: Generates new Access Token
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  description: Refresh Token
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzF9._-5EiwijyMU1y49adL1hRTOgQx-xipBdnun2Fym3VWw
+              required:
+                - refreshToken
+      responses:
+        "200":
+          description: New Access Token Generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    description: Access Token
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImJydW5vQGVtYWlsLmNvbSIsInBhc3N3b3JkIjoiMTIzNDUiLCJpYXQiOjE2MjI5MjUyNzEsImV4cCI6MTYyMjkyNTU3MX0.0I5gFrVjyUjdgg_NkMwdwk6ZHux4n8JLqgia1CERrbM
+                required:
+                  - accessToken
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      description: Revoke user access
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  description: User ID
+                  type: string
+                  example: 1622928299857
+              required:
+                - id
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      tags: [Users]
+      description: Search users
+      operationId: list
+      parameters:
+        - name: name
+          description: User name
+          in: query
+          schema:
+            type: string
+            example: Client User
+        - name: email
+          description: User email
+          in: query
+          schema:
+            type: string
+            example: user@email.com
+        - name: page
+          description: Pagination page
+          in: query
+          schema:
+            type: number
+            example: 0
+        - name: limit
+          description: Pagination limit
+          in: query
+          schema:
+            type: number
+            example: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    description: Pagination page
+                    type: string
+                    example: 0
+                  perPage:
+                    description: Results per page
+                    type: string
+                    example: 10
+                  total:
+                    description: Results total
+                    type: string
+                    example: 2
+                  users:
+                    description: Users list
+                    type: string
+                    example: "{page: 0, perPage: 10, total: 2, users: [{id: 1622928299857, name: 'Client User', email: 'user@email.com', profile: 'client'}, {id: 1622928299859, name: 'Admin User', email: 'admin@email.com', profile: 'admin'}]}"
+                required:
+                  - page
+                  - perPage
+                  - total
+                  - users
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [Users]
+      description: Creates a new user
+      operationId: create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: User name
+                  type: string
+                  example: Client User
+                email:
+                  description: User email
+                  type: string
+                  example: user@email.com
+                role:
+                  description: User role
+                  type: string
+                  example: client
+                password:
+                  description: User password
+                  type: string
+                  example: "12345"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: User ID
+                    type: string
+                    example: 1622928299857
+                  name:
+                    description: User name
+                    type: string
+                    example: Client User
+                  email:
+                    description: User email
+                    type: string
+                    example: user@email.com
+                required:
+                  - id
+                  - name
+                  - email
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      description: Shows user information
+      operationId: show
+      parameters:
+        - name: id
+          description: User ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: User ID
+                    type: string
+                    example: 1622928299857
+                  name:
+                    description: User name
+                    type: string
+                    example: Client User
+                  email:
+                    description: User email
+                    type: string
+                    example: user@email.com
+                  role:
+                    description: User role
+                    type: string
+                    example: client
+                required:
+                  - id
+                  - name
+                  - email
+                  - role
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags: [Users]
+      description: Updates user information
+      operationId: update
+      parameters:
+        - name: id
+          description: User ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: User name
+                  type: string
+                  example: Client User
+                email:
+                  description: User email
+                  type: string
+                  example: user@email.com
+                role:
+                  description: User role
+                  type: string
+                  example: client
+                password:
+                  description: User password
+                  type: string
+                  example: "12345"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: User ID
+                    type: string
+                    example: 1622928299857
+                  name:
+                    description: User name
+                    type: string
+                    example: Client User
+                  email:
+                    description: User email
+                    type: string
+                    example: user@email.com
+                  role:
+                    description: User role
+                    type: string
+                    example: client
+                required:
+                  - id
+                  - name
+                  - email
+                  - role
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Users]
+      description: Deletes user
+      operationId: delete
+      parameters:
+        - name: id
+          description: User ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products:
+    get:
+      tags: [Products]
+      description: Search products
+      operationId: list
+      parameters:
+        - name: title
+          description: Product Name
+          in: query
+          schema:
+            type: string
+            example: Client Product
+        - name: tag
+          description: Single word to search in product's description
+          in: query
+          schema:
+            type: string
+            example: book
+        - name: minValue
+          description: Minimum product's value
+          in: query
+          schema:
+            type: string
+            example: "1.99"
+        - name: maxValue
+          description: Maximum product's value
+          in: query
+          schema:
+            type: string
+            example: "100.00"
+        - name: active
+          description: Boolean to search active/inactive products
+          in: query
+          schema:
+            type: boolean
+            example: true
+        - name: page
+          description: Pagination page
+          in: query
+          schema:
+            type: number
+            example: 0
+        - name: limit
+          description: Pagination limit
+          in: query
+          schema:
+            type: number
+            example: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    description: Pagination page
+                    type: string
+                    example: 0
+                  perPage:
+                    description: Results per page
+                    type: string
+                    example: 10
+                  total:
+                    description: Results total
+                    type: string
+                    example: 2
+                  products:
+                    description: Products list
+                    type: string
+                    example: "{page: 0, perPage: 10, total: 2, products: [{id: 1622928299857, title: 'Awesome Book', description: 'A great book', value: '49.99', active: true, image: 'bookimagepath.jpg'}, {id: 1622928299858, title: 'Another Book', description: 'Another great book', value: '149.99', active: false, image: 'anotherbookimagepath.jpg'}]}"
+                required:
+                  - page
+                  - perPage
+                  - total
+                  - products
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [Products]
+      description: Creates a new product
+      operationId: create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  description: Product title
+                  type: string
+                  example: Awesome Book
+                description:
+                  description: Product email
+                  type: string
+                  example: A great book
+                value:
+                  description: Product role
+                  type: string
+                  example: "49.99"
+                active:
+                  description: Product status
+                  type: boolean
+                  example: true
+                image:
+                  description: Product image
+                  type: string
+                  example: bookimagepath.jpg
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: Product ID
+                    type: string
+                    example: 1622928299857
+                  title:
+                    description: Product title
+                    type: string
+                    example: Awesome Book
+                  description:
+                    description: Product email
+                    type: string
+                    example: A great book
+                  value:
+                    description: Product role
+                    type: string
+                    example: "49.99"
+                  active:
+                    description: Product status
+                    type: boolean
+                    example: true
+                  image:
+                    description: Product image
+                    type: string
+                    example: bookimagepath.jpg
+                required:
+                  - id
+                  - title
+                  - description
+                  - value
+                  - image
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      description: Shows product information
+      operationId: show
+      parameters:
+        - name: id
+          description: Product ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: Product ID
+                    type: string
+                    example: 1622928299857
+                  title:
+                    description: Product title
+                    type: string
+                    example: Awesome Book
+                  description:
+                    description: Product email
+                    type: string
+                    example: A great book
+                  value:
+                    description: Product role
+                    type: string
+                    example: "49.99"
+                  active:
+                    description: Product status
+                    type: boolean
+                    example: true
+                  image:
+                    description: Product image
+                    type: string
+                    example: bookimagepath.jpg
+                required:
+                  - id
+                  - title
+                  - description
+                  - value
+                  - image
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags: [Products]
+      description: Updates product information
+      operationId: update
+      parameters:
+        - name: id
+          description: Product ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  id:
+                    description: Product ID
+                    type: string
+                    example: 1622928299857
+                  title:
+                    description: Product title
+                    type: string
+                    example: Awesome Book
+                  description:
+                    description: Product email
+                    type: string
+                    example: A great book
+                  value:
+                    description: Product role
+                    type: string
+                    example: "49.99"
+                  active:
+                    description: Product status
+                    type: boolean
+                    example: true
+                  image:
+                    description: Product image
+                    type: string
+                    example: bookimagepath.jpg
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: Product ID
+                    type: string
+                    example: 1622928299857
+                  title:
+                    description: Product title
+                    type: string
+                    example: Awesome Book
+                  description:
+                    description: Product email
+                    type: string
+                    example: A great book
+                  value:
+                    description: Product role
+                    type: string
+                    example: "49.99"
+                  active:
+                    description: Product status
+                    type: boolean
+                    example: true
+                  image:
+                    description: Product image
+                    type: string
+                    example: bookimagepath.jpg
+                required:
+                  - id
+                  - title
+                  - description
+                  - value
+                  - image
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Products]
+      description: Deletes product
+      operationId: delete
+      parameters:
+        - name: id
+          description: Product ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1622928299857
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401Response"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403Response"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+                
+        default:
+          description: Some other error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    Login:
+      type: object
+      properties:
+        email:
+          description: User email
+          type: string
+          example: user@email.com
+        password:
+          description: User password
+          type: string
+          example: "12345"
+      required:
+        - email
+        - password
+
+    401Response:
+      type: object
+      properties:
+        error:
+          description: Error message
+          type: string
+          example: Unauthorized
+      required:
+        - error
+
+    403Response:
+      type: object
+      properties:
+        error:
+          description: Error message
+          type: string
+          example: Forbidden
+      required:
+        - error
+
+    404Response:
+      type: object
+      properties:
+        error:
+          description: Error message
+          type: string
+          example: Not found
+      required:
+        - error
+
+    500Response:
+      type: object
+      properties:
+        error:
+          description: Error message
+          type: string
+          example: Internal Server Error
+      required:
+        - error
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          description: Error message
+          type: string
+          example: Error message
+      required:
+        - error
