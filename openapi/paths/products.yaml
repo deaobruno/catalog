@@ -9,7 +9,7 @@
         in: query
         schema:
           type: string
-          example: Client Product
+          example: Awesome Book
       - name: tag
         description: Single word to search in product's description
         in: query
