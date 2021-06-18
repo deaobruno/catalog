@@ -1,234 +1,151 @@
+import {body, param, query, validationResult} from 'express-validator';
 import {User} from '../models/user.js';
 
 class UserMiddleware {
+  constructor() {
+    this.idRules = [
+      param('id')
+        .notEmpty()
+        .isMongoId()
+        .withMessage('Wrong format')
+    ];
+
+    this.findRules = [
+      query('name')
+        .if(name => typeof name !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      query('email')
+        .if(email => typeof email !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isEmail()
+        .withMessage('Wrong format'),
+      query('role')
+        .if(role => typeof role !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn(['client', 'admin']),
+    ];
+
+    this.createRules = [
+      body('name')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('email')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isEmail()
+        .withMessage('Wrong format'),
+      body('role')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn(['client', 'admin']),
+      body('password')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isLength({min: 5}),
+    ];
+
+    this.updateRules = [
+      body('name')
+        .if(name => typeof name !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('email')
+        .if(email => typeof email !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isEmail()
+        .withMessage('Wrong format'),
+      body('role')
+        .if(role => typeof role !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn(['client', 'admin']),
+      body('password')
+        .if(password => typeof password !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isLength({min: 5}),
+    ];
+  }
+
   async validateId(req, res, next) {
-    const {id} = req.params;
+    const errors = validationResult(req);
 
-    if (id && typeof id === 'undefined') {
-      let err = new Error('Missing id');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
-    let user = await User.findById(id);
+    await User.findById(req.params.id, (err, result) => {
+      if (err) {
+        next(err);
 
-    if (!user) {
-      let err = new Error('Not found');
+        return;
+      }      
 
-      err.statusCode = 404;
+      if (!result) {
+        let err = new Error('Not found');
 
-      next(err);
-      
-      return;
-    }
+        err.statusCode = 404;
 
-    next();
+        next(err);
+        
+        return;
+      }
+
+      next();
+    });
   }
 
   async validateFind(req, res, next) {
-    const {name, email, role} = req.query;
+    const errors = validationResult(req);
 
-    if (typeof name !== 'undefined' && !name) {
-      let err = new Error('Missing name');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof email !== 'undefined' && !email) {
-      let err = new Error('Missing email');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof email !== 'undefined' && !email.match(/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/)) {
-      let err = new Error('Wrong email format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof role !== 'undefined' && !role) {
-      let err = new Error('Missing role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (role && !['client', 'admin'].includes(role)) {
-      let err = new Error('Invalid role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
     next();
   }
 
-  async validateCreate(req, res, next) {
-    const {name, email, role, password} = req.body;
-
-    if (!name) {
-      let err = new Error('Missing name');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+  async validateUser(req, res, next) {
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
-    if (!email) {
-      let err = new Error('Missing email');
+    await User.findOne({email: req.body.email}, (err, result) => {
+      if (err) {
+        next(err);
 
-      err.statusCode = 400;
+        return;
+      }
 
-      next(err);
+      if (result) {
+        let err = new Error('Email already registered');
 
-      return;
-    }
+        err.statusCode = 409;
 
-    if (!email.match(/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/)) {
-      let err = new Error('Wrong email format');
+        next(err);
 
-      err.statusCode = 400;
+        return;
+      }
 
-      next(err);
-
-      return;
-    }
-
-    if (!role) {
-      let err = new Error('Missing role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!['client', 'admin'].includes(role)) {
-      let err = new Error('Invalid role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!password) {
-      let err = new Error('Missing password');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    const user = await User.findOne({email});
-
-    if (user) {
-      let err = new Error('Email already registered');
-
-      err.statusCode = 409;
-
-      next(err);
-
-      return;
-    }
-
-    next();
-  }
-
-  async validateUpdate(req, res, next) {
-    const {name, email, role} = req.body;
-
-    if (typeof name !== 'undefined' && !name) {
-      let err = new Error('Missing name');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof email !== 'undefined' && !email) {
-      let err = new Error('Missing email');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof email !== 'undefined' && !email.match(/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/)) {
-      let err = new Error('Wrong email format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof role !== 'undefined' && !role) {
-      let err = new Error('Missing role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof role !== 'undefined' && !['client', 'admin'].includes(role)) {
-      let err = new Error('Invalid role');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    const user = await User.findOne({email});
-
-    if (user) {
-      let err = new Error('Email already registered');
-
-      err.statusCode = 409;
-
-      next(err);
-
-      return;
-    }
-
-    next();
+      next();
+    });
   }
 }
 

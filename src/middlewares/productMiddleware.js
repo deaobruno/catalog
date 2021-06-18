@@ -1,312 +1,188 @@
+import {body, param, query, validationResult} from 'express-validator';
 import {Product} from '../models/product.js';
 
+const currencyRegEx = /[0-9]\d*/g;
+
 class ProductMiddleware {
+  constructor() {
+    this.idRules = [
+      param('id')
+        .notEmpty()
+        .isMongoId()
+        .withMessage('Wrong format')
+    ];
+
+    this.findRules = [
+      query('title')
+        .if(title => typeof title !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      query('tag')
+        .if(tag => typeof tag !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      query('value')
+        .if(value => typeof value !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isCurrency()
+        .withMessage('Wrong format'),
+      query('minValue')
+        .if(minValue => typeof minValue !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isCurrency()
+        .withMessage('Wrong format'),
+      query('maxValue')
+        .if(maxValue => typeof maxValue !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isCurrency()
+        .withMessage('Wrong format'),
+      query('active')
+        .if(active => typeof active !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn([0, 1]),
+    ];
+
+    this.createRules = [
+      body('title')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('description')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('value')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isCurrency()
+        .withMessage('Wrong format'),
+      body('active')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn([1, 0]),
+    ];
+
+    this.updateRules = [
+      body('title')
+        .if(title => typeof title !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('description')
+        .if(description => typeof description !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('value')
+        .if(value => typeof value !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isCurrency()
+        .withMessage('Wrong format'),
+      body('active')
+        .if(active => typeof active !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isIn([1, 0]),
+    ];
+  }
+
   async validateId(req, res, next) {
-    const {id} = req.params;
+    const errors = validationResult(req);
 
-    if (id && typeof id === 'undefined') {
-      let err = new Error('Missing id');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
-    let product = await Product.findById(id);
+    await Product.findById(req.params.id, (err, result) => {
+      if (err) {
+        next(err);
 
-    if (!product) {
-      let err = new Error('Not found');
+        return;
+      }
 
-      err.statusCode = 404;
+      if (!result) {
+        let err = new Error('Not found');
 
-      next(err);
-      
-      return;
-    }
+        err.statusCode = 404;
 
-    next();
+        next(err);
+        
+        return;
+      }
+
+      next();
+    });
   }
 
   async validateFind(req, res, next) {
-    const {title, tag, value, minValue, maxValue, active} = req.query;
+    const errors = validationResult(req);
 
-    if (typeof title !== 'undefined' && !title) {
-      let err = new Error('Missing title');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
-    if (typeof tag !== 'undefined' && !tag) {
-      let err = new Error('Missing tag');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof value !== 'undefined' && !value) {
-      let err = new Error('Missing value');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
+    const {value, minValue, maxValue} = req.query;
 
     if (typeof value !== 'undefined') {
-      req.query.value = req.query.value.match(/[0-9]\d*/g).join('');
-    }
-
-    if (typeof minValue !== 'undefined' && !minValue) {
-      let err = new Error('Missing minValue');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+      req.query.value = value.match(currencyRegEx).join('');
     }
 
     if (typeof minValue !== 'undefined') {
-      req.query.minValue = req.query.minValue.match(/[0-9]\d*/g).join('');
-    }
-
-    if (typeof maxValue !== 'undefined' && !maxValue) {
-      let err = new Error('Missing maxValue');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+      req.query.minValue = minValue.match(currencyRegEx).join('');
     }
 
     if (typeof maxValue !== 'undefined') {
-      req.query.maxValue = req.query.maxValue.match(/[0-9]\d*/g).join('');
+      req.query.maxValue = maxValue.match(currencyRegEx).join('');
     }
 
-    if (typeof active !== 'undefined' && !active) {
-      let err = new Error('Missing active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (active && ![true, false].includes(active)) {
-      let err = new Error('Invalid active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+    if (!req.isAdmin) {
+      req.query.active = 1;
     }
 
     next();
   }
 
-  async validateCreate(req, res, next) {
-    const {title, description, value, active, image} = req.body;
-
-    if (!title) {
-      let err = new Error('Missing title');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
+  async validateProduct(req, res, next) {
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).send({errors: errors.array()});
     }
 
-    if (!description) {
-      let err = new Error('Missing description');
+    await Product.findOne(req.body, (err, result) => {
+      if (err) {
+        next(err);
 
-      err.statusCode = 400;
+        return;
+      }
 
-      next(err);
+      if (result) {
+        let err = new Error('Product already registered');
 
-      return;
-    }
+        err.statusCode = 409;
 
-    if (!value) {
-      let err = new Error('Missing value');
+        next(err);
 
-      err.statusCode = 400;
+        return;
+      }
 
-      next(err);
-
-      return;
-    }
-
-    if (!value.match(/([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/)) {
-      let err = new Error('Wrong value format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!active) {
-      let err = new Error('Missing active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (![true, false].includes(active)) {
-      let err = new Error('Invalid active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!image) {
-      let err = new Error('Missing image');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    req.body.value = req.body.value.match(/[0-9]\d*/g).join('');
-
-    const product = await Product.findOne(req.body);
-
-    if (product) {
-      let err = new Error('Product already registered');
-
-      err.statusCode = 409;
-
-      next(err);
-
-      return;
-    }
-
-    next();
-  }
-
-  async validateUpdate(req, res, next) {
-    const {title, description, value, active, image} = req.body;
-
-    if (typeof title !== 'undefined' && !title) {
-      let err = new Error('Missing title');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof description !== 'undefined' && !description) {
-      let err = new Error('Missing description');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof value !== 'undefined' && !value) {
-      let err = new Error('Missing value');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof value !== 'undefined' && !value.match(/([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/)) {
-      let err = new Error('Wrong value format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof value !== 'undefined') {
-      req.body.value = req.body.value.match(/[0-9]\d*/g).join('');
-    }
-
-    if (typeof active !== 'undefined' && !active) {
-      let err = new Error('Missing active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof active !== 'undefined' && ![true, false].includes(active)) {
-      let err = new Error('Invalid active');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (typeof image !== 'undefined' && !image) {
-      let err = new Error('Missing image');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if ([title, description, value, active, image].filter(attribute => typeof attribute !== 'undefined').length === 0) {
-      let err = new Error('No attributes provided');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    const product = await Product.findOne(req.body);
-
-    if (product) {
-      let err = new Error('Product already registered');
-
-      err.statusCode = 409;
-
-      next(err);
-
-      return;
-    }
-
-    next();
+      next();
+    });
   }
 }
 

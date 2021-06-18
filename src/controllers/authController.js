@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import {JWT} from '../helpers/jwt.js';
 import {User} from '../models/user.js';
 
@@ -15,15 +16,30 @@ class AuthController {
 
   async register(req, res, next) {
     try {
-      req.body.role = 'client';
+      const saltRounds = 10;
 
-      const newUser = await User.create(req.body);
+      await bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
+        if (err) {
+          next(err);
 
-      newUser.password = undefined;
-      newUser.role = undefined;
-      newUser.__v = undefined;
+          return;
+        }
 
-      res.status(201).send(newUser);
+        req.body.password = hash;
+        req.body.role = 'client';
+
+        await User.create(req.body, (err, result) => {
+          if (err) {
+            next(err);
+
+            return;
+          }
+
+          const {_id, name, email} = result;
+
+          res.status(201).send({_id, name, email});
+        });
+      });
     } catch(err) {
       next(err);
     }

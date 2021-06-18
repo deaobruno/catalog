@@ -9,7 +9,13 @@ class ProductController {
         return;
       }
 
-      res.status(201).send(result);
+      const {_id, title, description, value} = result;
+
+      result = result.toJSON();
+
+      result.value = (result.value / 100).toLocaleString();
+
+      res.status(201).send({_id, title, description, value});
     });
   }
 
@@ -21,21 +27,13 @@ class ProductController {
         return;
       }
 
-      if (!result) {
-        let err = new Error('Not found');
-
-        err.statusCode = 404;
-
-        next(err);
-
-        return;
-      }
+      const {_id, title, description, value} = result;
 
       result = result.toJSON();
 
       result.value = (result.value / 100).toLocaleString();
 
-      res.status(200).send(result);
+      res.status(200).send({_id, title, description, value});
     });
   }
 
@@ -98,6 +96,8 @@ class ProductController {
 
       for (let item of result) {
         item.value = (item.value / 100).toLocaleString();
+        delete item.__v;
+        delete item.active;
       }
 
       const total = await Product.countDocuments(query);
@@ -118,6 +118,7 @@ class ProductController {
 
   async update(req, res, next) {
     let _id = req.params.id;
+    req.body.updatedAt = Date.now();
 
     await Product.findByIdAndUpdate(
       _id,
@@ -130,7 +131,13 @@ class ProductController {
           return;
         }
 
-        res.status(200).send(result);
+        const {_id, title, description, value} = result;
+
+        result = result.toJSON();
+
+        result.value = (result.value / 100).toLocaleString();
+
+        res.status(200).send({_id, title, description, value});
       });
   }
 

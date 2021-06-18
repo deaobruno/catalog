@@ -12,15 +12,12 @@ const ProductSchema = mongoose.Schema({
   value: {
     type: Number,
     required: [true, 'Missing attribute!'],
+    match: /([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/,
   },
   active: {
-    type: Boolean,
+    type: Number,
     required: [true, 'Missing attribute!'],
-  },
-  image: {
-    type: String,
-    required: [true, 'Missing attribute!'],
-    match: [/(^.*\.{1})+[a-z]{1,4}$/, 'Wrong format!'],
+    enum: [0, 1],
   },
   createdAt: {
     type: Date,

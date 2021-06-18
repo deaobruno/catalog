@@ -1,5 +1,5 @@
 class ErrorMiddleware {
-  sendError = (err, req, res, next) => {
+  sendError(err, req, res, next) {
     console.log(err.stack);
 
     if (err) {

@@ -9,25 +9,31 @@ router.use(authMiddleware.validateToken);
 
 router.route('/')
   .get(
+    userMiddleware.findRules,
     userMiddleware.validateFind,
     userController.find
   )
   .post(
-    userMiddleware.validateCreate,
+    userMiddleware.createRules,
+    userMiddleware.validateUser,
     userController.create
   );
 
 router.route('/:id')
   .get(
+    userMiddleware.idRules,
     userMiddleware.validateId,
     userController.findOne
   )
   .put(
+    userMiddleware.idRules,
     userMiddleware.validateId,
-    userMiddleware.validateUpdate,
+    userMiddleware.updateRules,
+    userMiddleware.validateUser,
     userController.update
   )
   .delete(
+    userMiddleware.idRules,
     userMiddleware.validateId,
     userController.delete
   );

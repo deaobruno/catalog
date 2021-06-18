@@ -3,12 +3,15 @@ import jwt from 'jsonwebtoken';
 import {accessToken} from '../models/accessToken.js';
 import {refreshToken} from '../models/refreshToken.js';
 
+const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+
 class jwtHelper {
   async getAccessToken(data) {
     const token = await jwt.sign(
       data,
-      process.env.ACCESS_TOKEN_SECRET,
-      {expiresIn: process.env.TOKEN_EXPIRATION_TIME}
+      accessTokenSecret,
+      {expiresIn: '5m'}
     );
 
     await accessToken.create({token});
@@ -19,7 +22,7 @@ class jwtHelper {
   async getRefreshToken(data) {
     const token = await jwt.sign(
       data,
-      process.env.REFRESH_TOKEN_SECRET
+      refreshTokenSecret
     );
 
     await refreshToken.create({token});
@@ -30,7 +33,7 @@ class jwtHelper {
   async validateAccessToken(token, callback) {
     await jwt.verify(
       token,
-      process.env.ACCESS_TOKEN_SECRET,
+      accessTokenSecret,
       async (err, data) => {
         if (callback) {
           callback(err, data);
@@ -41,7 +44,7 @@ class jwtHelper {
   async validateRefreshToken(token, callback) {
     await jwt.verify(
       token,
-      process.env.REFRESH_TOKEN_SECRET,
+      refreshTokenSecret,
       async (err, data) => {
         if (callback) {
           callback(err, data);

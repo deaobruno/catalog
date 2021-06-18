@@ -9,25 +9,34 @@ router.use(authMiddleware.validateToken);
 
 router.route('/')
   .get(
+    productMiddleware.findRules,
     productMiddleware.validateFind,
     productController.find
   )
   .post(
-    productMiddleware.validateCreate,
+    authMiddleware.isAdmin,
+    productMiddleware.createRules,
+    productMiddleware.validateProduct,
     productController.create
   );
 
 router.route('/:id')
   .get(
+    productMiddleware.idRules,
     productMiddleware.validateId,
     productController.findOne
   )
   .put(
+    authMiddleware.isAdmin,
+    productMiddleware.idRules,
     productMiddleware.validateId,
-    productMiddleware.validateUpdate,
+    productMiddleware.updateRules,
+    productMiddleware.validateProduct,
     productController.update
   )
   .delete(
+    authMiddleware.isAdmin,
+    productMiddleware.idRules,
     productMiddleware.validateId,
     productController.delete
   );

@@ -1,15 +1,30 @@
+import bcrypt from 'bcrypt';
 import {User} from '../models/user.js';
+
+const saltRounds = 10;
 
 class UserController {
   async create(req, res, next) {
-    await User.create(req.body, (err, result) => {
+    await bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
       if (err) {
         next(err);
-        
+
         return;
       }
 
-      res.status(201).send(result);
+      req.body.password = hash;
+
+      await User.create(req.body, (err, result) => {
+        if (err) {
+          next(err);
+          
+          return;
+        }
+
+        const {_id, name, email} = result;
+
+        res.status(201).send({_id, name, email});
+      });
     });
   }
 
@@ -21,17 +36,9 @@ class UserController {
         return;
       }
 
-      if (!result) {
-        let err = new Error('Not found');
+      const {_id, name, email} = result;
 
-        err.statusCode = 404;
-
-        next(err);
-
-        return;
-      }
-
-      res.status(200).send(result);
+      res.status(200).send({_id, name, email});
     });
   }
 
@@ -61,6 +68,14 @@ class UserController {
         return;
       }
 
+      result = JSON.parse(JSON.stringify(result));
+
+      for (let item of result) {
+        delete item.__v;
+        delete item.password;
+        delete item.role;
+      }
+
       const total = await User.countDocuments(req.query);
 
       const data = {
@@ -78,17 +93,31 @@ class UserController {
   }
 
   async update(req, res, next) {
-    let _id = req.params.id;
-
-    await User.findByIdAndUpdate(_id, req.body, {new: true}, (err, result) => {
-      if (err) {
-        next(err);
-        
-        return;
+    if (req.body.password) {
+      const hash = await bcrypt.hash(req.body.password, saltRounds);
+      
+      if (hash) {
+        req.body.password = hash;
       }
+    }
 
-      res.status(200).send(result);
-    });
+    req.body.updatedAt = Date.now();
+
+    await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {new: true},
+      (err, result) => {
+        if (err) {
+          next(err);
+          
+          return;
+        }
+
+        const {_id, name, email} = result;
+
+        res.status(200).send({_id, name, email});
+      });
   }
 
   async delete(req, res, next) {

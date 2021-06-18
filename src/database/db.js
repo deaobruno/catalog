@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 mongoose.connect(
-  process.env.DB_STRING,
+  `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
   { 
     useFindAndModify: false,
     useNewUrlParser: true, 

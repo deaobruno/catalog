@@ -7,16 +7,16 @@ class AuthMiddleware {
     const token = authorization && authorization.split(' ')[1];
 
     if (!token) {
-      let err = new Error('Unauthorized');
+      let err = new Error('Forbidden');
 
-      err.statusCode = 401;
+      err.statusCode = 403;
 
       next(err);
 
       return;
     }
 
-    await JWT.validateAccessToken(token, async (err, user) => {
+    await JWT.validateAccessToken(token, async (err, decoded) => {
       if (err) {
         let err = new Error('Unauthorized');
 
@@ -27,9 +27,9 @@ class AuthMiddleware {
         return;
       }
 
-      req.user = user;
+      req.userEmail = decoded.email;
 
-      await JWT.checkAccessToken(token, (err, check) => {
+      await JWT.checkAccessToken(token, async (err, check) => {
         if (err) {
           next(err);
 
@@ -46,10 +46,40 @@ class AuthMiddleware {
           return;
         }
 
-        req.accessToken = token;
+        await User.findOne({email: decoded.email}, (err, user) => {
+          if (err) {
+            next(err);
 
-        next();
+            return;
+          }
+
+          req.isAdmin = user.role === 'admin';
+
+          next();
+        });
       });
+    });
+  }
+
+  async isAdmin(req, res, next) {
+    await User.findOne({email: req.userEmail}, (err, user) => {
+      if (err) {
+        next(err);
+
+        return;
+      }
+
+      if (user.role !== 'admin') {
+        let err = new Error('Forbidden');
+
+        err.statusCode = 403;
+
+        next(err);
+
+        return;
+      }
+
+      next();
     });
   }
 
