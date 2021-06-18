@@ -4,6 +4,9 @@ import {initialize} from 'express-openapi';
 import jsYaml from 'js-yaml';
 import swaggerUI from 'swagger-ui-express';
 import {errorMiddleware} from '../middlewares/errorMiddleware.js';
+import {router as authRouter} from './auth.js';
+import {router as userRouter} from './user.js';
+import {router as productRouter} from './product.js';
 
 const app = express();
 
@@ -22,6 +25,10 @@ fs.readFile('./openapi/openapi.yaml', 'utf8', async (err, yamlFile) => {
 
   app.use('/docs', swaggerUI.serve, swaggerUI.setup(apiDoc));
 });
+
+app.use('/auth', authRouter);
+app.use('/user', userRouter);
+app.use('/product', productRouter);
 
 app.use((req, res) => {
   res.status(404).send({error: 'Not found'});

@@ -10,9 +10,8 @@ const ProductSchema = mongoose.Schema({
     required: [true, 'Missing attribute!'],
   },
   value: {
-    type: String,
+    type: Number,
     required: [true, 'Missing attribute!'],
-    match: [/([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/, 'Wrong format!'],
   },
   active: {
     type: Boolean,
@@ -34,5 +33,7 @@ const ProductSchema = mongoose.Schema({
 });
 
 const Product = mongoose.model('Product', ProductSchema);
+
+Product.createIndexes({description: 'text'});
 
 export {Product};
