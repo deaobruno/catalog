@@ -11,6 +11,8 @@ router.route('/')
   .get(
     productMiddleware.findRules,
     productMiddleware.validateFind,
+    productMiddleware.buildQuery,
+    productMiddleware.paginate,
     productController.find
   )
   .post(

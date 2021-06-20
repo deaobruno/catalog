@@ -17,6 +17,7 @@ const UserSchema = mongoose.Schema({
     type: String,
     required: [true, 'Missing attribute!'],
     enum: ['client', 'admin'],
+    default: 'client'
   },
   password: {
     type: String,
@@ -24,8 +25,8 @@ const UserSchema = mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now,
     required: [true, 'Missing attribute!'],
+    default: Date.now,
   },
   updatedAt: {
     type: Date,

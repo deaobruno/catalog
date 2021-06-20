@@ -11,11 +11,13 @@ router.route('/')
   .get(
     userMiddleware.findRules,
     userMiddleware.validateFind,
+    userMiddleware.paginate,
     userController.find
   )
   .post(
     userMiddleware.createRules,
     userMiddleware.validateUser,
+    userMiddleware.hashPassword,
     userController.create
   );
 
@@ -30,6 +32,7 @@ router.route('/:id')
     userMiddleware.validateId,
     userMiddleware.updateRules,
     userMiddleware.validateUser,
+    userMiddleware.hashPassword,
     userController.update
   )
   .delete(

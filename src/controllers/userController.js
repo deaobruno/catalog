@@ -1,64 +1,35 @@
-import bcrypt from 'bcrypt';
 import {User} from '../models/user.js';
-
-const saltRounds = 10;
 
 class UserController {
   async create(req, res, next) {
-    await bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
-      if (err) {
-        next(err);
+    try {
+      const user = await User.create(req.body);
 
-        return;
-      }
+      const {_id, name, email} = user;
 
-      req.body.password = hash;
-
-      await User.create(req.body, (err, result) => {
-        if (err) {
-          next(err);
-          
-          return;
-        }
-
-        const {_id, name, email} = result;
-
-        res.status(201).send({_id, name, email});
-      });
-    });
+      res.status(201).send({_id, name, email});
+    } catch(err) {
+      next(err);
+    }
   }
 
   async findOne(req, res, next) {
-    await User.findById(req.params.id, (err, result) => {
-      if (err) {
-        next(err);
-        
-        return;
-      }
+    try {
+      const user = await User.findById(req.params.id, '_id name email role');
 
-      const {_id, name, email} = result;
-
-      res.status(200).send({_id, name, email});
-    });
+      res.status(200).send(user);
+    } catch(err) {
+      next(err);
+    }
   }
 
   async find(req, res, next) {
-    let {page = 0, limit = 5} = req.query;
-    
-    page = parseInt(page);
-    limit = parseInt(limit);
+    try {
+      let users = await User.find(req.query, '_id name email role')
+        .skip(req.skip)
+        .limit(req.limit);
 
-    delete req.query.page;
-    delete req.query.limit;
-
-    await User.find(req.query, async (err, result) => {
-      if (err) {
-        next(err);
-        
-        return;
-      }
-
-      if (result.length <= 0) {
+      if (users.length <= 0) {
         let err = new Error('Not found');
 
         err.statusCode = 404;
@@ -68,68 +39,38 @@ class UserController {
         return;
       }
 
-      result = JSON.parse(JSON.stringify(result));
+      req.data.items = users;
 
-      for (let item of result) {
-        delete item.__v;
-        delete item.password;
-        delete item.role;
-      }
-
-      const total = await User.countDocuments(req.query);
-
-      const data = {
-        page: page,
-        pages: Math.ceil(total / limit),
-        limit: limit,
-        total: total,
-        items: result
-      };
-
-      res.status(200).send(data);
-    })
-      .skip(page * limit)
-      .limit(limit);
+      res.status(200).send(req.data);
+    } catch(err) {
+      next(err);
+    }
   }
 
   async update(req, res, next) {
-    if (req.body.password) {
-      const hash = await bcrypt.hash(req.body.password, saltRounds);
-      
-      if (hash) {
-        req.body.password = hash;
-      }
+    try {
+      req.body.updatedAt = Date.now();
+
+      const user = await User.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {select: '_id name email'}
+      );
+
+      res.status(200).send(user);
+    } catch(err) {
+      next(err);
     }
-
-    req.body.updatedAt = Date.now();
-
-    await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {new: true},
-      (err, result) => {
-        if (err) {
-          next(err);
-          
-          return;
-        }
-
-        const {_id, name, email} = result;
-
-        res.status(200).send({_id, name, email});
-      });
   }
 
   async delete(req, res, next) {
-    await User.findByIdAndDelete(req.params.id, err => {
-      if (err) {
-        next(err);
-        
-        return;
-      }
+    try {
+      await User.findByIdAndDelete(req.params.id);
 
       res.sendStatus(204);
-    });
+    } catch(err) {
+      next(err);
+    }
   }
 }
 

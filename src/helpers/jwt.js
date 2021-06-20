@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import {accessToken} from '../models/accessToken.js';
 import {refreshToken} from '../models/refreshToken.js';
@@ -30,42 +29,20 @@ class jwtHelper {
     return token;
   }
 
-  async validateAccessToken(token, callback) {
-    await jwt.verify(
-      token,
-      accessTokenSecret,
-      async (err, data) => {
-        if (callback) {
-          callback(err, data);
-        }
-      });
+  async validateAccessToken(token) {
+    return await jwt.verify(token, accessTokenSecret);
   }
 
-  async validateRefreshToken(token, callback) {
-    await jwt.verify(
-      token,
-      refreshTokenSecret,
-      async (err, data) => {
-        if (callback) {
-          callback(err, data);
-        }
-      });
+  async validateRefreshToken(token) {
+    return await jwt.verify(token, refreshTokenSecret);
   }
 
-  async checkAccessToken(token, callback) {
-    await accessToken.find({token}, (err, data) => {
-      if (callback) {
-        callback(err, data.length > 0);
-      }
-    });
+  async checkAccessToken(token) {
+    return await accessToken.findOne({token});
   }
 
-  async checkRefreshToken(token, callback) {
-    await refreshToken.find({token}, (err, data) => {
-      if (callback) {
-        callback(err, data.length > 0);
-      }
-    });
+  async checkRefreshToken(token) {
+    return await refreshToken.findOne({token});
   }
 
   async deleteAccessToken(token) {

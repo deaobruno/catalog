@@ -102,87 +102,167 @@ class ProductMiddleware {
   }
 
   async validateId(req, res, next) {
-    const errors = validationResult(req);
+    try {
+      const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-      return res.status(400).send({errors: errors.array()});
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
+      }
+
+      await Product.findById(req.params.id, (err, result) => {
+        if (err) {
+          next(err);
+
+          return;
+        }
+
+        if (!result) {
+          let err = new Error('Not found');
+
+          err.statusCode = 404;
+
+          next(err);
+          
+          return;
+        }
+
+        next();
+      });
+    } catch(err) {
+      next(err);
     }
-
-    await Product.findById(req.params.id, (err, result) => {
-      if (err) {
-        next(err);
-
-        return;
-      }
-
-      if (!result) {
-        let err = new Error('Not found');
-
-        err.statusCode = 404;
-
-        next(err);
-        
-        return;
-      }
-
-      next();
-    });
   }
 
   async validateFind(req, res, next) {
-    const errors = validationResult(req);
+    try {
+      const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-      return res.status(400).send({errors: errors.array()});
-    }
-
-    const {value, minValue, maxValue} = req.query;
-
-    if (typeof value !== 'undefined') {
-      req.query.value = value.match(currencyRegEx).join('');
-    }
-
-    if (typeof minValue !== 'undefined') {
-      req.query.minValue = minValue.match(currencyRegEx).join('');
-    }
-
-    if (typeof maxValue !== 'undefined') {
-      req.query.maxValue = maxValue.match(currencyRegEx).join('');
-    }
-
-    if (!req.isAdmin) {
-      req.query.active = 1;
-    }
-
-    next();
-  }
-
-  async validateProduct(req, res, next) {
-    const errors = validationResult(req);
-    
-    if (!errors.isEmpty()) {
-      return res.status(400).send({errors: errors.array()});
-    }
-
-    await Product.findOne(req.body, (err, result) => {
-      if (err) {
-        next(err);
-
-        return;
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
       }
 
-      if (result) {
-        let err = new Error('Product already registered');
+      const {value, minValue, maxValue} = req.query;
 
-        err.statusCode = 409;
+      if (typeof value !== 'undefined') {
+        req.query.value = value.match(currencyRegEx).join('');
+      }
 
-        next(err);
+      if (typeof minValue !== 'undefined') {
+        req.query.minValue = minValue.match(currencyRegEx).join('');
+      }
 
-        return;
+      if (typeof maxValue !== 'undefined') {
+        req.query.maxValue = maxValue.match(currencyRegEx).join('');
+      }
+
+      if (!req.isAdmin) {
+        req.query.active = 1;
       }
 
       next();
-    });
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async validateProduct(req, res, next) {
+    try {
+      const errors = validationResult(req);
+      
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
+      }
+
+      await Product.findOne(req.body, (err, result) => {
+        if (err) {
+          next(err);
+
+          return;
+        }
+
+        if (result) {
+          let err = new Error('Product already registered');
+
+          err.statusCode = 409;
+
+          next(err);
+
+          return;
+        }
+
+        next();
+      });
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async buildQuery(req, res, next) {
+    try {
+      req.updateQuery = {};
+      
+      if (req.query.title) {
+        req.updateQuery.title = req.query.title;
+      }
+
+      if (req.query.tag) {
+        req.updateQuery.$text = {$search: `\"${req.query.tag}\"`};
+      }
+      
+      if (req.query.value) {
+        req.updateQuery.value = req.query.value;
+      }
+
+      if (req.query.minValue && !req.query.maxValue) {
+        req.updateQuery.value = {$gte: parseInt(req.query.minValue)};
+      }
+
+      if (req.query.maxValue && !req.query.minValue) {
+        req.updateQuery.value = {$lte: parseInt(req.query.maxValue)};
+      }
+
+      if (req.query.maxValue && req.query.minValue) {
+        req.updateQuery.$and = [
+          {value: {$gte: parseInt(req.query.minValue)}},
+          {value: {$lte: parseInt(req.query.maxValue)}}
+        ];
+      }
+      
+      if (req.query.active) {
+        req.updateQuery.active = req.query.active;
+      }
+
+      next();
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async paginate(req, res, next) {
+    try {
+      let {page = 0, limit = 5} = req.query;
+      
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      req.limit = limit;
+      req.skip = page * limit;
+
+      const total = await Product.countDocuments(req.updateQuery);
+
+      const data = {
+        page: page,
+        pages: Math.ceil(total / limit),
+        limit: limit,
+        total: total
+      };
+
+      req.data = data;
+
+      next();
+    } catch(err) {
+      next(err);
+    }
   }
 }
 

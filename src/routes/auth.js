@@ -6,13 +6,16 @@ const router = Router();
 
 router.post(
   '/login',
+  authMiddleware.authRules,
   authMiddleware.validateLogin,
   authController.login
 );
 
 router.post(
   '/register',
+  authMiddleware.registerRules,
   authMiddleware.validateRegister,
+  authMiddleware.hashPassword,
   authController.register
 );
 
@@ -20,6 +23,7 @@ router.use(authMiddleware.validateToken);
 
 router.post(
   '/refresh',
+  authMiddleware.refreshTokenRules,
   authMiddleware.validateRefresh,
   authController.refresh
 );

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import {userController} from '../../src/controllers/userController.js';
-import {userModel} from '../../src/models/user.js';
+import {User} from '../../src/models/user.js';
 
 jest.mock('../../src/models/user.js');
 
@@ -10,203 +10,98 @@ let next = jest.fn();
 
 describe('userController', () => {
   beforeEach(() => {
-    req = {};
-    res = {};
-
-    req.body = jest.fn().mockReturnValue(req);
+    req.body = {
+      value: jest.fn().mockReturnValue(req),
+      writable: true
+    };
     req.params = jest.fn().mockReturnValue(req);
+    req.query = jest.fn().mockReturnValue(req);
 
     res.status = jest.fn().mockReturnValue(res);
     res.send = jest.fn().mockReturnValue(res);
     res.sendStatus = jest.fn().mockReturnValue(res);
   });
 
+  afterEach(() => {
+    req = {};
+    res = {};
+    next = jest.fn();
+  });
+
   describe('create', () => {
-    test('it should fail with no name and return 400', async () => {
-      req.body.email = 'user@email.com';
-      req.body.role = 'client';
-      req.body.password = '12345';
+    test('it should pass and return 201', async () => {
+      const expected = {
+        _id: '60cef666c0e7dc39bcc074d7',
+        name: 'Some User',
+        email: 'user@email.com'
+      }
 
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing name'});
-    });
-
-    test('it should fail with no email and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.role = 'client';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing email'});
-    });
-
-    test('it should fail with no role and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user@email.com';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing role'});
-    });
-
-    test('it should fail with no password and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user@email.com';
-      req.body.role = 'client';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing password'});
-    });
-
-    test('it should fail with empty name and return 400', async () => {
-      req.body.name = '';
-      req.body.email = 'user@email.com';
-      req.body.role = 'client';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing name'});
-    });
-
-    test('it should fail with empty email and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = '';
-      req.body.role = 'client';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing email'});
-    });
-
-    test('it should fail with empty role and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user@email.com';
-      req.body.role = '';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing role'});
-    });
-
-    test('it should fail with empty password and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user@email.com';
-      req.body.role = 'client';
-      req.body.password = '';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing password'});
-    });
-
-    test('it should fail with malformated email and return 400', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'useremail.com';
-      req.body.role = 'client';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Wrong email format'});
-    });
-
-    test('it should fail with a existing user and return 409', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user@email.com';
-      req.body.role = 'client';
-      req.body.password = '12345';
-
-      await userController.create(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.send).toHaveBeenCalledWith({error: 'Email already registered'});
-    });
-
-    test('it should create a user and return 201', async () => {
-      req.body.name = 'Some User';
-      req.body.email = 'user4@email.com';
-      req.body.role = 'client';
-      req.body.password = '45678';
+      req.body = {
+        name: 'Some User',
+        email: 'user@email.com',
+        role: 'client',
+        password: '45678'
+      }
 
       await userController.create(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.send).toHaveBeenCalledWith({id: expect.any(Number), name: expect.any(String), email: expect.any(String)});
+      expect(res.send).toHaveBeenCalledWith(expected);
     });
   });
 
-  describe('read', () => {
-    test('it should fail with empty id and return 400', async () => {
-      req.params.id = '';
-      
-      await userController.read(req, res, next);
+  describe('findOne', () => {
+    test('it should pass and return 200', async () => {
+      const expected = {
+        _id: '60cef666c0e7dc39bcc074d7',
+        name: 'Some User',
+        email: 'user@email.com'
+      }
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({error: 'Missing id'});
-    });
+      req.body.id = '60cef666c0e7dc39bcc074d7';
 
-    test('it should find an user by id and return 200', async () => {
-      req.params.id = 1623458405126;
-
-      await userController.read(req, res, next);
+      await userController.findOne(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(Array.isArray(res.send)).toBeTruthy();
-      expect(res.send).toHaveLength(1);
+      expect(res.send).toHaveBeenCalledWith(expected);
     });
+  });
 
-    test('it should find users by name and return 200', async () => {
-      req.params.name = 'Some User';
+  describe('find', () => {
+    test.only('it should pass and return 200', async () => {
+      const users = [
+        {
+          _id: '60cef666c0e7dc39bcc074d7',
+          name: 'Client User',
+          email: 'user@email.com',
+          role: 'client'
+        },
+        {
+          _id: '60cef666c0e7dc39bcc074d8',
+          name: 'Another User',
+          email: 'user2@email.com',
+          role: 'client'
+        },
+        {
+          _id: '60cef666c0e7dc39bcc074d9',
+          name: 'Admin User',
+          email: 'admin@email.com',
+          role: 'admin'
+        },
+      ];
 
-      await userController.read(req, res, next);
+      const expected = {
+        page: 0,
+        pages: 1,
+        limit: 5,
+        total: 3,
+        items: users
+      };
+
+      await userController.find(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(Array.isArray(res.send)).toBeTruthy();
-      expect(res.send).not.toHaveLength(0);
-    });
-
-    test('it should find an user by email and return 200', async () => {
-      req.params.email = 'user@email.com';
-
-      await userController.read(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(Array.isArray(res.send)).toBeTruthy();
-      expect(res.send).toHaveLength(1);
-    });
-
-    test('it should find users by role and return 200', async () => {
-      req.params.role = 'client';
-
-      await userController.read(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(Array.isArray(res.send)).toBeTruthy();
-      expect(res.send).not.toHaveLength(0);
-    });
-
-    test('it should get all users and return 200', async () => {
-      await userController.read(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(Array.isArray(res.send)).toBeTruthy();
-      expect(res.send).not.toHaveLength(0);
+      expect(res.send).toHaveBeenCalledWith(expected);
     });
   });
 

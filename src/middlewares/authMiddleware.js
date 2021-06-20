@@ -1,76 +1,139 @@
+import {body, validationResult} from 'express-validator';
+import {Bcrypt} from '../helpers/bcrypt.js';
 import {JWT} from '../helpers/jwt.js';
 import {User} from '../models/user.js';
 
 class AuthMiddleware {
-  async validateToken(req, res, next) {
-    const {authorization} = req.headers;
-    const token = authorization && authorization.split(' ')[1];
+  constructor() {
+    this.authRules = [
+      body('email')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isEmail()
+        .withMessage('Wrong format'),
+      body('password')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isLength({min: 5}),
+    ];
 
-    if (!token) {
-      let err = new Error('Forbidden');
+    this.registerRules = [
+      body('name')
+        .notEmpty()
+        .trim()
+        .escape(),
+      body('email')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isEmail()
+        .withMessage('Wrong format'),
+      body('password')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isLength({min: 5}),
+    ];
 
-      err.statusCode = 403;
+    this.refreshTokenRules = [
+      body('refreshToken')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isJWT(),
+    ];
+  }
 
-      next(err);
+  async hashPassword(req, res, next) {
+    try {
+      const {password} = req.body;
 
-      return;
-    }
+      if (password) {
+        const hash = await Bcrypt.generateHash(password);
 
-    await JWT.validateAccessToken(token, async (err, decoded) => {
-      if (err) {
-        let err = new Error('Unauthorized');
-
-        err.statusCode = 401;
-
-        next(err);
-
-        return;
+        if (hash) {
+          req.body.password = hash;
+        }
       }
 
-      req.userEmail = decoded.email;
-
-      await JWT.checkAccessToken(token, async (err, check) => {
-        if (err) {
-          next(err);
-
-          return;
-        }
-
-        if (!check) {
-          let err = new Error('Unauthorized');
-
-          err.statusCode = 401;
-
-          next(err);
-
-          return;
-        }
-
-        await User.findOne({email: decoded.email}, (err, user) => {
-          if (err) {
-            next(err);
-
-            return;
-          }
-
-          req.isAdmin = user.role === 'admin';
-
-          next();
-        });
-      });
-    });
+      next();
+    } catch(err) {
+      next(err);
+    }
   }
 
   async isAdmin(req, res, next) {
-    await User.findOne({email: req.userEmail}, (err, user) => {
-      if (err) {
+    try {
+      if (!req.isAdmin) {
+        throw new Error('Forbidden');
+      }
+
+      next();
+    } catch(err) {
+      err.statusCode = 403;
+
+      next(err);
+    }
+  }
+
+  async validateToken(req, res, next) {
+    try {
+      const {authorization} = req.headers;
+      const token = authorization && authorization.split(' ')[1];
+
+      if (!token) {
+        throw new Error('No token provided');
+      }
+
+      const validatedToken = await JWT.validateAccessToken(token);
+
+      const foundToken = await JWT.checkAccessToken(token);
+
+      if (!foundToken) {
+        throw new Error('Invalid token');
+      }
+
+      const user = await User.findOne({email: validatedToken.email});
+
+      req.isAdmin = user.role === 'admin';
+
+      next();
+    } catch(err) {
+      err.statusCode = 401;
+
+      next(err);
+    }
+  }
+
+  async validateLogin(req, res, next) {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
+      }
+
+      const user = await User.findOne({email: req.body.email});
+
+      if (!user) {
+        let err = new Error('Not found');
+
+        err.statusCode = 404;
+
         next(err);
 
         return;
       }
 
-      if (user.role !== 'admin') {
-        let err = new Error('Forbidden');
+      const passwordsMatch = await Bcrypt.comparePasswords(
+        req.body.password,
+        user.password
+      );
+
+      if (!passwordsMatch) {
+        let err = new Error('Unauthorized');
 
         err.statusCode = 403;
 
@@ -80,130 +143,48 @@ class AuthMiddleware {
       }
 
       next();
-    });
-  }
-
-  async validateLogin(req, res, next) {
-    const {email, password} = req.body;
-
-    if (!email) {
-      let err = new Error('Missing email');
-
-      err.statusCode = 400;
-
+    } catch(err) {
       next(err);
-
-      return;
     }
-
-    if (!email.match(/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/)) {
-      let err = new Error('Wrong email format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!password) {
-      let err = new Error('Missing password');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    const user = await User.find(req.body);
-
-    if (user.length <= 0) {
-      let err = new Error('Not found');
-
-      err.statusCode = 404;
-
-      next(err);
-
-      return;
-    }
-
-    next();
   }
 
   async validateRegister(req, res, next) {
-    const {name, email, password} = req.body;
+    try {
+      const errors = validationResult(req);
 
-    if (!name) {
-      let err = new Error('Missing name');
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
+      }
 
-      err.statusCode = 400;
+      const user = await User.find({email: req.body.email});
 
-      next(err);
+      if (user.length > 0) {
+        let err = new Error('Email already registered');
 
-      return;
-    }
+        err.statusCode = 409;
 
-    if (!email) {
-      let err = new Error('Missing email');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!email.match(/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/)) {
-      let err = new Error('Wrong email format');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    if (!password) {
-      let err = new Error('Missing password');
-
-      err.statusCode = 400;
-
-      next(err);
-
-      return;
-    }
-
-    const user = await User.find({email: req.body.email});
-
-    if (user.length > 0) {
-      let err = new Error('Email already registered');
-
-      err.statusCode = 409;
-
-      next(err);
-
-      return;
-    }
-
-    next();
-  }
-
-  async validateRefresh(req, res, next) {
-    const {refreshToken} = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).send({error: 'Missing refresh token'});
-    }
-
-    await JWT.checkRefreshToken(refreshToken, (err, check) => {
-      if (err) {
         next(err);
 
         return;
       }
 
-      if (!check) {
+      next();
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async validateRefresh(req, res, next) {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        return res.status(400).send({errors: errors.array()});
+      }
+
+      const foundToken = await JWT.checkRefreshToken(req.body.refreshToken);
+
+      if (!foundToken) {
         let err = new Error('Unauthorized');
 
         err.statusCode = 401;
@@ -214,7 +195,9 @@ class AuthMiddleware {
       }
 
       next();
-    });
+    } catch(err) {
+      next(err);
+    }
   }
 }
 

@@ -1,4 +1,3 @@
-import bcrypt from 'bcrypt';
 import {JWT} from '../helpers/jwt.js';
 import {User} from '../models/user.js';
 
@@ -16,30 +15,11 @@ class AuthController {
 
   async register(req, res, next) {
     try {
-      const saltRounds = 10;
+      const user = await User.create(req.body);
 
-      await bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
-        if (err) {
-          next(err);
+      const {_id, name, email} = user;
 
-          return;
-        }
-
-        req.body.password = hash;
-        req.body.role = 'client';
-
-        await User.create(req.body, (err, result) => {
-          if (err) {
-            next(err);
-
-            return;
-          }
-
-          const {_id, name, email} = result;
-
-          res.status(201).send({_id, name, email});
-        });
-      });
+      res.status(201).send({_id, name, email});
     } catch(err) {
       next(err);
     }
@@ -47,20 +27,16 @@ class AuthController {
 
   async refresh(req, res, next) {
     try {
-      await JWT.validateRefreshToken(
-        req.body.refreshToken,
-        async (err, user) => {
-          if (err) {
-            next(err);
-          }
+      const token = req.body.refreshToken;
 
-          JWT.deleteRefreshToken(req.body.refreshToken);
-          
-          const accessToken = await JWT.getAccessToken(user);
-          const refreshToken = await JWT.getRefreshToken(user);
+      const validatedToken = await JWT.validateRefreshToken(token);
 
-          res.status(200).send({accessToken, refreshToken});
-        });
+      await JWT.deleteRefreshToken(token);
+      
+      const accessToken = await JWT.getAccessToken(validatedToken);
+      const refreshToken = await JWT.getRefreshToken(validatedToken);
+
+      res.status(200).send({accessToken, refreshToken});
     } catch(err) {
       next(err);
     }
@@ -68,7 +44,7 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      JWT.deleteAccessToken(req.accessToken);
+      await JWT.deleteAccessToken(req.accessToken);
 
       res.sendStatus(204);
     } catch(err) {

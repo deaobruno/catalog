@@ -13,8 +13,11 @@ mongoose.connect(
       return;
     }
 
+    mongoose.set('returnOriginal', false);
+    
     console.log('Connected to DB');
   }
 );
+
 
 export {mongoose};

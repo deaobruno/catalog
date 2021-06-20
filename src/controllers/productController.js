@@ -2,87 +2,48 @@ import {Product} from '../models/product.js';
 
 class ProductController {
   async create(req, res, next) {
-    await Product.create(req.body, (err, result) => {
-      if (err) {
-        next(err);
+    try {
+      let product = await Product.create(req.body);
 
-        return;
-      }
+      product = product.toJSON();
 
-      const {_id, title, description, value} = result;
+      product.value = (product.value / 100).toLocaleString();
 
-      result = result.toJSON();
-
-      result.value = (result.value / 100).toLocaleString();
+      const {_id, title, description, value} = product;
 
       res.status(201).send({_id, title, description, value});
-    });
+    } catch(err) {
+      next(err);
+    }
   }
 
   async findOne(req, res, next) {
-    await Product.findById(req.params.id, (err, result) => {
-      if (err) {
-        next(err);
+    try {
+      let product = await Product.findById(
+        req.params.id,
+        '_id title description value'
+      );
 
-        return;
-      }
+      product = product.toJSON();
 
-      const {_id, title, description, value} = result;
+      product.value = (product.value / 100).toLocaleString();
 
-      result = result.toJSON();
-
-      result.value = (result.value / 100).toLocaleString();
-
-      res.status(200).send({_id, title, description, value});
-    });
+      res.status(200).send(product);
+    } catch(err) {
+      next(err);
+    }
   }
 
   async find(req, res, next) {
-    let {page = 0, limit = 5} = req.query;
-    let query = {};
-    
-    page = parseInt(page);
-    limit = parseInt(limit);
-    
-    if (req.query.title) {
-      query.title = req.query.title;
-    }
+    try {
+      let products = await Product.find(
+        req.updateQuery,
+        '_id title description value'
+      )
+        .skip(req.skip)
+        .limit(req.limit);
 
-    if (req.query.tag) {
-      query.$text = {$search: `\"${req.query.tag}\"`};
-    }
-    
-    if (req.query.value) {
-      query.value = req.query.value;
-    }
-
-    if (req.query.minValue && !req.query.maxValue) {
-      query.value = {$gte: parseInt(req.query.minValue)};
-    }
-
-    if (req.query.maxValue && !req.query.minValue) {
-      query.value = {$lte: parseInt(req.query.maxValue)};
-    }
-
-    if (req.query.maxValue && req.query.minValue) {
-      query.$and = [
-        {value: {$gte: parseInt(req.query.minValue)}},
-        {value: {$lte: parseInt(req.query.maxValue)}}
-      ];
-    }
-    
-    if (req.query.active) {
-      query.active = req.query.active;
-    }
-
-    await Product.find(query, async (err, result) => {
-      if (err) {
-        next(err);
-
-        return;
-      }
-
-      if (result.length <= 0) {
+      if (products.length <= 0) {
         let err = new Error('Not found');
 
         err.statusCode = 404;
@@ -92,65 +53,42 @@ class ProductController {
         return;
       }
 
-      result = JSON.parse(JSON.stringify(result));
+      req.data.items = products;
 
-      for (let item of result) {
-        item.value = (item.value / 100).toLocaleString();
-        delete item.__v;
-        delete item.active;
-      }
-
-      const total = await Product.countDocuments(query);
-
-      const data = {
-        page: page,
-        pages: Math.ceil(total / limit),
-        limit: limit,
-        total: total,
-        items: result
-      };
-
-      res.status(200).send(data);
-    })
-      .skip(page * limit)
-      .limit(limit);
+      res.status(200).send(req.data);
+    } catch(err) {
+      next(err);
+    }
   }
 
   async update(req, res, next) {
-    let _id = req.params.id;
-    req.body.updatedAt = Date.now();
+    try {
+      req.body.updatedAt = Date.now();
 
-    await Product.findByIdAndUpdate(
-      _id,
-      req.body,
-      {new: true},
-      (err, result) => {
-        if (err) {
-          next(err);
+      let product = await Product.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {select: '_id title description value'}
+      );
 
-          return;
-        }
+      product = product.toJSON();
 
-        const {_id, title, description, value} = result;
+      product.value = (product.value / 100).toLocaleString();
 
-        result = result.toJSON();
-
-        result.value = (result.value / 100).toLocaleString();
-
-        res.status(200).send({_id, title, description, value});
-      });
+      res.status(200).send(product);
+    } catch(err) {
+      next(err);
+    }
   }
 
   async delete(req, res, next) {
-    await Product.findByIdAndDelete(req.params.id, err => {
-      if (err) {
-        next(err);
-
-        return;
-      }
+    try {
+      await Product.findByIdAndDelete(req.params.id);
 
       res.sendStatus(204);
-    });
+    } catch(err) {
+      next(err);
+    }
   }
 }
 
