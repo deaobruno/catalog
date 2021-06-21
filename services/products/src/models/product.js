@@ -12,7 +12,7 @@ const ProductSchema = mongoose.Schema({
   value: {
     type: Number,
     required: [true, 'Missing attribute!'],
-    match: /([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/,
+    match: /([0-9]+[\,])?([0-9]+[\.,])+([0-9]{2})+/, // eslint-disable-line
   },
   active: {
     type: Number,

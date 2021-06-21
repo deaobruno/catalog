@@ -110,25 +110,19 @@ class ProductMiddleware {
         return res.status(400).send({errors: errors.array()});
       }
 
-      await Product.findById(req.params.id, (err, result) => {
-        if (err) {
-          next(err);
+      const product = await Product.findById(req.params.id);
 
-          return;
-        }
+      if (!product) {
+        let err = new Error('Not found');
 
-        if (!result) {
-          let err = new Error('Not found');
+        err.statusCode = 404;
 
-          err.statusCode = 404;
+        next(err);
+        
+        return;
+      }
 
-          next(err);
-          
-          return;
-        }
-
-        next();
-      });
+      next();
     } catch(err) {
       next(err);
     }
@@ -174,25 +168,19 @@ class ProductMiddleware {
         return res.status(400).send({errors: errors.array()});
       }
 
-      await Product.findOne(req.body, (err, result) => {
-        if (err) {
-          next(err);
+      const product = await Product.findOne(req.body);
 
-          return;
-        }
+      if (product) {
+        let err = new Error('Product already registered');
 
-        if (result) {
-          let err = new Error('Product already registered');
+        err.statusCode = 409;
 
-          err.statusCode = 409;
+        next(err);
 
-          next(err);
+        return;
+      }
 
-          return;
-        }
-
-        next();
-      });
+      next();
     } catch(err) {
       next(err);
     }
@@ -207,7 +195,7 @@ class ProductMiddleware {
       }
 
       if (req.query.tag) {
-        req.updateQuery.$text = {$search: `\"${req.query.tag}\"`};
+        req.updateQuery.$text = {$search: `\"${req.query.tag}\"`}; // eslint-disable-line
       }
       
       if (req.query.value) {
