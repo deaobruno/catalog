@@ -1,0 +1,35 @@
+{
+  "name": "catalog",
+  "version": "1.0.0",
+  "description": "Product's catalog from a store",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "lint": "eslint ./",
+    "lintFix": "eslint ./ --fix"
+  },
+  "keywords": [],
+  "author": "Bruno Oliveira",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-openapi": "^9.0.3",
+    "express-validator": "^6.11.1",
+    "js-yaml": "^4.1.0",
+    "mongoose": "^5.12.13",
+    "swagger-ui-express": "^4.1.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/preset-env": "^7.14.5",
+    "babel-jest": "^27.0.2",
+    "eslint": "^7.28.0",
+    "jest": "^27.0.4",
+    "nodemon": "^2.0.7"
+  }
+}
