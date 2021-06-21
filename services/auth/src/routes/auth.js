@@ -20,6 +20,8 @@ router.post(
 
 router.use(authMiddleware.validateToken);
 
+router.get('/validateToken', (req, res, next) => res.sendStatus(200));
+
 router.post(
   '/refresh',
   authMiddleware.refreshTokenRules,
