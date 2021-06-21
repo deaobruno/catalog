@@ -24,5 +24,4 @@ mongoose.connect(
   }
 );
 
-
 export {mongoose};
