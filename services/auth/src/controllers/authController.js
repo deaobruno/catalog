@@ -21,9 +21,7 @@ class AuthController {
 
           res.status(201).send(user);
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(err => next(err));
     } catch(err) {
       next(err);
     }

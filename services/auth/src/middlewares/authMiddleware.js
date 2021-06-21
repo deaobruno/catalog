@@ -80,16 +80,14 @@ class AuthMiddleware {
       await axios.get(
         `http://localhost:8002/user/email/${validatedToken.email}`
       )
-        .then((response) => {
+        .then(response => {
           const user = response.data;
           
           req.isAdmin = user.role === 'admin';
 
           next();
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch(err => next(err));
     } catch(err) {
       err.statusCode = 401;
 
@@ -108,7 +106,7 @@ class AuthMiddleware {
       await axios.get(
         `http://localhost:8002/user/email/${req.body.email}`
       )
-        .then(async (response) => {
+        .then(async response => {
           const user = response.data;
 
           const passwordsMatch = await Bcrypt.comparePasswords(
@@ -119,7 +117,7 @@ class AuthMiddleware {
           if (!passwordsMatch) {
             let err = new Error('Unauthorized');
 
-            err.statusCode = 403;
+            err.statusCode = 401;
 
             next(err);
 
@@ -128,9 +126,7 @@ class AuthMiddleware {
 
           next();
         })
-        .catch((err) => {
-          next(err);
-        });
+        .catch((err) => next(err));
     } catch(err) {
       next(err);
     }
@@ -156,9 +152,7 @@ class AuthMiddleware {
 
           return;
         })
-        .catch(() => {
-          next();
-        });
+        .catch(() => next());
     } catch(err) {
       next(err);
     }
