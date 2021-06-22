@@ -1,0 +1,32 @@
+{
+  "name": "catalog",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "build": "sh build.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deaobruno/catalog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deaobruno/catalog/issues"
+  },
+  "homepage": "https://github.com/deaobruno/catalog#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "express-openapi": "^9.0.3",
+    "js-yaml": "^4.1.0",
+    "swagger-ui-express": "^4.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
