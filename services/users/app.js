@@ -16,5 +16,5 @@ app.listen(port, err => {
     console.log(err.message);
   }
 
-  console.log(`Server running on port ${port}`);
+  console.log(`Users server running on port ${port}`);
 });

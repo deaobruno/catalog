@@ -207,7 +207,7 @@ class UserMiddleware {
 
   async validateToken(req, res, next) {
     try {
-      await axios.get('http://localhost:8001/auth/validateToken', {
+      await axios.get(`${process.env.AUTH_URL}/auth/validateToken`, {
         headers: {
           authorization: req.headers.authorization
         }

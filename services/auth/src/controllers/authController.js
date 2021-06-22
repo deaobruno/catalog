@@ -15,7 +15,7 @@ class AuthController {
 
   async register(req, res, next) {
     try {
-      await axios.post('http://localhost:8002/user', req.body)
+      await axios.post(`${process.env.USERS_URL}/user`, req.body)
         .then((response) => {
           const user = response.data;
 

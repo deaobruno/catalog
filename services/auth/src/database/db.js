@@ -1,12 +1,7 @@
 import mongoose from 'mongoose';
 
-const host = process.env.DB_HOST;
-const port = process.env.DB_PORT;
-const dbName = process.env.DB_NAME;
-const dbString = `${host}:${port}/${dbName}`;
-
 mongoose.connect(
-  `mongodb://${dbString}`,
+  process.env.DB_URL,
   { 
     useFindAndModify: false,
     useNewUrlParser: true, 

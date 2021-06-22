@@ -256,7 +256,7 @@ class ProductMiddleware {
 
   async validateToken(req, res, next) {
     try {
-      await axios.get('http://localhost:8001/auth/validateToken', {
+      await axios.get(`${process.env.AUTH_URL}/auth/validateToken`, {
         headers: {
           authorization: req.headers.authorization
         }
@@ -276,7 +276,7 @@ class ProductMiddleware {
 
   async isAdmin(req, res, next) {
     try {
-      const response = await axios.get('http://localhost:8001/auth/isAdmin', {
+      const response = await axios.get(`${process.env.AUTH_URL}/auth/isAdmin`, {
         headers: {
           authorization: req.headers.authorization
         }

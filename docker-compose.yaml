@@ -1,66 +1,54 @@
 version: '3.1'
 services:
   auth_app:
-    build: .
+    build: ./services/auth
     command: npm run dev
     volumes:
-      - .:/usr/app/
+      - ./services/auth:/usr/app/
       - /usr/app/node_modules
     ports:
-      - "8001:8001"
+      - "8001:8000"
     depends_on:
-      - auth_db
+      - db
     environment:
-      APP_PORT: 8001
-      DB_HOST: localhost
-      DB_PORT: 27017
-      DB_NAME: auth
+      APP_PORT: 8000
+      DB_URL: mongodb://db:27017/auth
+      USERS_URL: http://users_app:8000
       ACCESS_TOKEN_SECRET: e8f22ec6850ef9a76f2d63cd8053d7934d9025204d526e01726eef7d097770f900dce6d17d7448611227a1c2b48873e7f6b59a663621de781d8898a59611b567
       REFRESH_TOKEN_SECRET: 18ac72eb80d33312f899c4c35cf55c7f72cf2a9f6c6de1cd6fbd1123533107ba8073af65658934e7e6efe8e578d631f1470be3ed3b80ebce9e10da32bec84c02
-  auth_db:
-    image: auth_db
-    restart: always
-    ports:
-      - 27017:27017
 
   users_app:
-    build: .
+    build: ./services/users
     command: npm run dev
     volumes:
-      - .:/usr/app/
+      - ./services/users:/usr/app/
       - /usr/app/node_modules
     ports:
-      - "8002:8002"
+      - "8002:8000"
     depends_on:
-      - users_db
+      - db
     environment:
-      APP_PORT: 8002
-      DB_HOST: localhost
-      DB_PORT: 27017
-      DB_NAME: users
-  users_db:
-    image: users_db
-    restart: always
-    ports:
-      - 27017:27017
+      APP_PORT: 8000
+      DB_URL: mongodb://db:27017/users
+      AUTH_URL: http://auth_app:8000
 
   products_app:
-    build: .
+    build: ./services/products
     command: npm run dev
     volumes:
-      - .:/usr/app/
+      - ./services/products:/usr/app/
       - /usr/app/node_modules
     ports:
-      - "8003:8003"
+      - "8003:8000"
     depends_on:
-      - products_db
+      - db
     environment:
-      APP_PORT: 8003
-      DB_HOST: localhost
-      DB_PORT: 27017
-      DB_NAME: products
-  products_db:
-    image: products_db
+      APP_PORT: 8000
+      DB_URL: mongodb://db:27017/products
+      AUTH_URL: http://auth_app:8000
+
+  db:
+    image: mongo
     restart: always
     ports:
       - 27017:27017

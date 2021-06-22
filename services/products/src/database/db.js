@@ -1,12 +1,7 @@
 import mongoose from 'mongoose';
 
-const host = process.env.DB_HOST;
-const port = process.env.DB_PORT;
-const dbName = process.env.DB_NAME;
-const dbString = `${host}:${port}/${dbName}`;
-
 mongoose.connect(
-  `mongodb://${dbString}`,
+  process.env.DB_URL,
   { 
     useFindAndModify: false,
     useNewUrlParser: true, 
@@ -20,7 +15,7 @@ mongoose.connect(
 
     mongoose.set('returnOriginal', false);
     
-    console.log('Connected to auth DB');
+    console.log('Connected to products DB');
   }
 );
 

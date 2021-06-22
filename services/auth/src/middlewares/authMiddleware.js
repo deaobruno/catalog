@@ -78,7 +78,7 @@ class AuthMiddleware {
       }
 
       await axios.get(
-        `http://localhost:8002/user/email/${validatedToken.email}`
+        `${process.env.USERS_URL}/user/email/${validatedToken.email}`
       )
         .then(response => {
           const user = response.data;
@@ -104,7 +104,7 @@ class AuthMiddleware {
       }
 
       await axios.get(
-        `http://localhost:8002/user/email/${req.body.email}`
+        `${process.env.USERS_URL}/user/email/${req.body.email}`
       )
         .then(async response => {
           const user = response.data;
@@ -141,7 +141,7 @@ class AuthMiddleware {
       }
 
       await axios.get(
-        `http://localhost:8002/user/email/${req.body.email}`
+        `${process.env.USERS_URL}/user/email/${req.body.email}`
       )
         .then(() => {
           let err = new Error('Email already registered');
