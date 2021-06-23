@@ -15,7 +15,7 @@ class AuthController {
 
   async register(req, res, next) {
     try {
-      await axios.post(`${process.env.USERS_URL}/user`, req.body)
+      await axios.post(`${process.env.USERS_URL}/users`, req.body)
         .then((response) => {
           const user = response.data;
 
@@ -29,7 +29,7 @@ class AuthController {
 
   async refresh(req, res, next) {
     try {
-      const token = req.body.refreshToken;
+      const token = req.params.refreshToken;
 
       const validatedToken = await JWT.validateRefreshToken(token);
 

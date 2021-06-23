@@ -31,6 +31,18 @@ class UserMiddleware {
         .trim()
         .escape()
         .isIn(['client', 'admin']),
+      query('page')
+        .if(page => typeof page !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isNumeric(),
+      query('limit')
+        .if(limit => typeof limit !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isNumeric(),
     ];
 
     this.createRules = [
@@ -157,6 +169,26 @@ class UserMiddleware {
     }
   }
 
+  async validateToken(req, res, next) {
+    try {
+      await axios.get(`${process.env.AUTH_URL}/auth/validateToken`, {
+        headers: {
+          authorization: req.headers.authorization
+        }
+      })
+        .then(() => next())
+        .catch(err => {
+          err.statusCode = 401;
+
+          next(err);
+        });
+    } catch(err) {
+      err.statusCode = 401;
+
+      next(err);
+    }
+  }
+
   async hashPassword(req, res, next) {
     try {
       let {password} = req.body;
@@ -177,7 +209,7 @@ class UserMiddleware {
 
   async paginate(req, res, next) {
     try {
-      let {page = 0, limit = 5} = req.query;
+      let {page = 0, limit = 10} = req.query;
 
       page = parseInt(page);
       limit = parseInt(limit);
@@ -201,26 +233,6 @@ class UserMiddleware {
 
       next();
     } catch(err) {
-      next(err);
-    }
-  }
-
-  async validateToken(req, res, next) {
-    try {
-      await axios.get(`${process.env.AUTH_URL}/auth/validateToken`, {
-        headers: {
-          authorization: req.headers.authorization
-        }
-      })
-        .then(() => next())
-        .catch(err => {
-          err.statusCode = 401;
-
-          next(err);
-        });
-    } catch(err) {
-      err.statusCode = 401;
-
       next(err);
     }
   }

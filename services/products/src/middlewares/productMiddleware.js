@@ -51,6 +51,18 @@ class ProductMiddleware {
         .trim()
         .escape()
         .isIn([0, 1]),
+      query('page')
+        .if(page => typeof page !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isNumeric(),
+      query('limit')
+        .if(limit => typeof limit !== 'undefined')
+        .notEmpty()
+        .trim()
+        .escape()
+        .isNumeric(),
     ];
 
     this.createRules = [
@@ -229,7 +241,7 @@ class ProductMiddleware {
 
   async paginate(req, res, next) {
     try {
-      let {page = 0, limit = 5} = req.query;
+      let {page = 0, limit = 10} = req.query;
       
       page = parseInt(page);
       limit = parseInt(limit);

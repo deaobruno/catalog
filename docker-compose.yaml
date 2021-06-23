@@ -58,6 +58,7 @@ services:
     command: npm run dev
     volumes:
       - ./services/docs:/usr/app/
+      - ./openapi:/usr/app/openapi/
       - /usr/app/node_modules
     ports:
       - "8084:8080"

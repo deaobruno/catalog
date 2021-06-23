@@ -13,16 +13,6 @@ class UserController {
     }
   }
 
-  async findOne(req, res, next) {
-    try {
-      const user = await User.findById(req.params.id, '_id name email role');
-
-      res.status(200).send(user);
-    } catch(err) {
-      next(err);
-    }
-  }
-
   async find(req, res, next) {
     try {
       let users = await User.find(req.query, '_id name email')
@@ -42,6 +32,16 @@ class UserController {
       req.data.items = users;
 
       res.status(200).send(req.data);
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async findOne(req, res, next) {
+    try {
+      const user = await User.findById(req.params.id, '_id name email role');
+
+      res.status(200).send(user);
     } catch(err) {
       next(err);
     }

@@ -10,7 +10,7 @@ class jwtHelper {
     const token = await jwt.sign(
       data,
       accessTokenSecret,
-      {expiresIn: '5m'}
+      {expiresIn: '10m'}
     );
 
     await accessToken.create({token});

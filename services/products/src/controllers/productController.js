@@ -17,23 +17,6 @@ class ProductController {
     }
   }
 
-  async findOne(req, res, next) {
-    try {
-      let product = await Product.findById(
-        req.params.id,
-        '_id title description value'
-      );
-
-      product = product.toJSON();
-
-      product.value = (product.value / 100).toLocaleString();
-
-      res.status(200).send(product);
-    } catch(err) {
-      next(err);
-    }
-  }
-
   async find(req, res, next) {
     try {
       let products = await Product.find(
@@ -56,6 +39,23 @@ class ProductController {
       req.data.items = products;
 
       res.status(200).send(req.data);
+    } catch(err) {
+      next(err);
+    }
+  }
+
+  async findOne(req, res, next) {
+    try {
+      let product = await Product.findById(
+        req.params.id,
+        '_id title description value'
+      );
+
+      product = product.toJSON();
+
+      product.value = (product.value / 100).toLocaleString();
+
+      res.status(200).send(product);
     } catch(err) {
       next(err);
     }
