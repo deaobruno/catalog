@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {body, validationResult} from 'express-validator';
+import {body, param, validationResult} from 'express-validator';
 import {Bcrypt} from '../helpers/bcrypt.js';
 import {JWT} from '../helpers/jwt.js';
 
@@ -38,7 +38,7 @@ class AuthMiddleware {
     ];
 
     this.refreshTokenRules = [
-      params('refreshToken')
+      param('refreshToken')
         .notEmpty()
         .trim()
         .escape()

@@ -9,6 +9,7 @@ docker-compose up -d
 #### Shell
 
 Otherwise, to build the services in your local machine, you may run each one e a separate terminal window, using the following commands:
+(* Remember to configure .env files using .env-example located in each service's root)
 ```
 cd services/{service name}
 npm install
